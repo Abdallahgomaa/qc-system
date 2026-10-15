@@ -13,3 +13,6 @@ ROLE_LABELS = {
     "lab_technician": "فني مختبر",
     "manager": "مدير المشروع"
 }
+
+# أنواع الملفات المسموح برفعها كمرفقات (بلا نقطة). الصور تُضغط تلقائياً قبل الرفع.
+UPLOAD_TYPES = ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff", "pdf", "xlsx", "xls", "csv"]

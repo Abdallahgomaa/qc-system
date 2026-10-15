@@ -1,0 +1,37 @@
+# ملفات ومجلدات لا تُرفع إلى Git (البند 2.6)
+# ---------------------------------------------------------------------------
+# 1) الأسرار: تحتوي مفاتيح Supabase، تُضاف محلياً في هذا الملف فقط،
+#    وعلى Streamlit Community Cloud تُلصق في خانة Secrets بالإعدادات.
+.streamlit/secrets.toml
+
+# 2) ملفات بايثون المؤقتة والمترجَمة
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# 3) البيئات الافتراضية
+.venv/
+venv/
+env/
+
+# 4) ملفات السجلات والمخرجات المؤقتة
+*.log
+*.tmp
+*.bak
+
+# 5) أدوات التحليل والاختبار
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 6) نظام التشغيل والمحرر
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# ملاحظة: الملفات التالية تبقى متتبَّعة عن قصد لأنها جزء من المشروع:
+#   .streamlit/config.toml  و  .streamlit/secrets.toml.example
+#   schema.sql  و  migrations/  و  tests/  و  .github/workflows/keepalive.yml

@@ -83,12 +83,51 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 .login-brand .en{color:var(--gold-soft);font-size:.78rem;letter-spacing:.08em;margin-top:.2rem;}
 .sidebar-brand{padding:.4rem 0 .8rem;direction:ltr;}
 
-/* ---------- الموبايل ---------- */
+/* ---------- جداول السجلات (البند 3.2: تتبع الثيم فاتح/داكن + RTL) ---------- */
+.cges-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:4px;margin:.4rem 0;}
+table.cges-table{width:100%;border-collapse:collapse;direction:rtl;font-size:.9rem;background:var(--surface);}
+table.cges-table thead th{background:var(--navy);color:var(--navy-text) !important;padding:.55rem .7rem;
+  text-align:right;font-weight:600;border:1px solid var(--border);white-space:nowrap;}
+table.cges-table tbody td{padding:.45rem .7rem;border:1px solid var(--border);color:var(--text) !important;
+  text-align:right;background:var(--surface);}
+table.cges-table tbody tr:nth-child(even) td{background:var(--hover);}
+table.cges-table tbody tr:hover td{background:var(--hover);}
+
+/* ---------- الشاشات المتوسطة والضيقة (البند 2.4) ---------- */
+/* بطاقات المؤشرات: بطاقتان في الصف بدل أربع بطاقات مضغوطة (لوحة/تابلت/موبايل). */
+@media (max-width:1024px){
+  [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) > [data-testid="stColumn"]{
+    flex:1 1 45% !important;min-width:45% !important;}
+}
+
+/* ---------- الموبايل (البند 2.4: عرض نظيف على شاشة الهاتف) ---------- */
 @media (max-width:768px){
-  .block-container{padding:3.2rem .8rem 2rem;}
+  .block-container{padding:3.2rem .7rem 2rem;}
   .page-head h1{font-size:1.3rem;}
+  .page-head p{font-size:.85rem;}
+  .dim-line{max-width:100%;}
+  [data-testid="stMetric"]{padding:.7rem .85rem;}
   [data-testid="stMetricValue"]{font-size:1.5rem;}
-  .stButton>button,.stFormSubmitButton>button{width:100%;}
+  [data-testid="stMetricLabel"]{font-size:.8rem;}
+  .stButton>button,.stFormSubmitButton>button,.stDownloadButton>button,
+  [data-testid="stLinkButton"] a{width:100%;}
+  [data-testid="stForm"]{padding:.9rem;}
+  /* حقول النماذج: كل حقل في سطر كامل لسهولة اللمس */
+  [data-testid="stForm"] [data-testid="stHorizontalBlock"]{flex-wrap:wrap;}
+  [data-testid="stForm"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]{
+    flex:1 1 100% !important;min-width:100% !important;}
+  /* الجداول العريضة: تمرير أفقي داخل حاويتها بلا كسر عرض الصفحة */
+  .cges-table-wrap{max-width:100%;}
+  table.cges-table{font-size:.78rem;}
+  table.cges-table thead th,table.cges-table tbody td{padding:.38rem .45rem;}
+  table.cges-table thead th{white-space:normal;}
+  .alert{font-size:.88rem;}
+  /* لا تنكسر الصفحة بسبب نص طويل (أسماء ملفات، بريد…) */
+  [data-testid="stMarkdownContainer"],table.cges-table td{overflow-wrap:anywhere;}
+  /* شاشة الدخول: النموذج بعرض كامل بدل أعمدة ضيقة (الأعمدة الفارغة تنطبق) */
+  [data-testid="stHorizontalBlock"]:has(.login-brand) > [data-testid="stColumn"]{
+    flex:1 1 100% !important;min-width:100% !important;}
+  .login-brand{padding:1.4rem 1rem 1.2rem;}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
 </style>

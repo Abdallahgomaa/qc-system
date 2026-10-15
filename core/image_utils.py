@@ -28,6 +28,39 @@ class CompressionResult:
     original_kb: float
     final_kb: float
     within_target: bool
+    width: int = 0
+    height: int = 0
+
+    @property
+    def long_side(self) -> int:
+        """الضلع الأطول بالبكسل بعد الضغط (يُستعمل لقياس وضوح الأرقام)."""
+        return max(self.width, self.height)
+
+
+# حدّا وضوح الأرقام بعد الضغط (البند 2.5): إن نزل الضلع الأطول عن هذا الحد،
+# أو صار حجم الملف أصغر من الحد الأدنى، نحذّر المستخدم ونطلب صورة أوضح.
+CLARITY_MIN_SIDE = MIN_SIDE
+CLARITY_MIN_KB = 40.0
+
+
+def clarity_note(result: CompressionResult) -> tuple[str, str | None]:
+    """يعيد (ملخّص عربي للحجم والأبعاد، تحذير وضوح أو ``None``) — البند 2.5."""
+    summary = (
+        f"الأبعاد {result.width}×{result.height} بكسل — الحجم {result.final_kb:,.0f} ك.ب "
+        f"(الأصل {result.original_kb:,.0f} ك.ب)"
+    )
+    warn = None
+    if result.width and result.long_side < CLARITY_MIN_SIDE:
+        warn = (
+            f"دقّة الصورة منخفضة (الضلع الأطول {result.long_side} بكسل فقط)؛ "
+            "صوّر من مسافة أقرب وبإضاءة أفضل لضمان قراءة الأرقام."
+        )
+    elif result.final_kb < CLARITY_MIN_KB:
+        warn = (
+            f"حجم الصورة المضغوطة صغير جداً ({result.final_kb:,.0f} ك.ب) وقد تكون الأرقام "
+            "غير واضحة — تحقّق من المعاينة."
+        )
+    return summary, warn
 
 
 def _to_rgb(img: Image.Image) -> Image.Image:
@@ -73,4 +106,5 @@ def compress_image(raw: bytes, max_kb: int = 250, fmt: str = "WEBP") -> Compress
         data=data, ext=ext, mime=mime,
         original_kb=len(raw) / 1024, final_kb=len(data) / 1024,
         within_target=len(data) <= target,
+        width=img.width, height=img.height,
     )

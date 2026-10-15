@@ -153,6 +153,34 @@ create policy cges_files_insert on storage.objects for insert to authenticated
 create policy cges_files_delete on storage.objects for delete to authenticated
   using (bucket_id = 'cges-files' and is_admin());
 
+-- ---------- سجل التدقيق (البند 3.7) ----------
+-- نفّذ أيضاً ``migrations/001_audit_log.sql`` على قاعدة قائمة للتحديث.
+create table if not exists audit_log (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  user_id uuid,
+  username text,
+  action text not null,
+  table_name text not null,
+  record_id uuid,
+  project_id uuid,
+  summary text,
+  details jsonb
+);
+
+create index if not exists idx_audit_created on audit_log(created_at desc);
+create index if not exists idx_audit_project on audit_log(project_id, created_at desc);
+
+alter table audit_log enable row level security;
+
+drop policy if exists audit_insert on audit_log;
+create policy audit_insert on audit_log for insert to authenticated with check (true);
+
+drop policy if exists audit_select on audit_log;
+create policy audit_select on audit_log for select using (is_admin());
+
+grant select, insert on audit_log to authenticated;
+
 -- =====================================================================
 -- إنشاء أول مدير عام (مرة واحدة):
 -- 1) Authentication > Users > Add user: البريد admin@cges.local + كلمة مرور، وفعّل Auto Confirm

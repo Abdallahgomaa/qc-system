@@ -10,6 +10,9 @@ from core.config import ROLE_LABELS  # noqa: E402
 dark = st.session_state.get("dark_mode", False)
 st.markdown(theme.build_css("dark" if dark else "light"), unsafe_allow_html=True)
 
+auth.restore_session()   # البند 3.1: استعادة الجلسة من الكوكي بعد تحديث الصفحة
+auth.persist_session()   # البند 3.1: كتابة/تحديث الكوكي على تشغيل مستقر
+
 if not auth.is_logged_in():
     ui.login_screen()
     st.stop()

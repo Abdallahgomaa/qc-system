@@ -72,6 +72,115 @@ def logout_ui():
                 supabase.auth.sign_out()
             except Exception:
                 pass
+            _forget_session()
             st.session_state["user"] = None
             st.success("تم تسجيل الخروج بنجاح")
             st.rerun()
+
+def logout():
+    """تسجيل الخروج: إنهاء جلسة Supabase وتفريغ حالة الجلسة المحلية.
+
+    دالة إضافية غير كاسرة يستدعيها app.py عند الضغط على زر «تسجيل الخروج».
+    """
+    try:
+        supabase.auth.sign_out()
+    except Exception:
+        pass
+    _forget_session()
+    st.session_state.pop("project_id", None)
+    st.session_state["user"] = None
+    st.success("تم تسجيل الخروج بنجاح")
+    st.rerun()
+
+
+# ---------------------------------------------------------------------------
+# البند 3.1: تثبيت الجلسة بعد تحديث الصفحة (كوكي + إعادة التفويض)
+# ---------------------------------------------------------------------------
+_COOKIE_NAME = "cges_session"
+_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # ثلاثون يوماً
+
+
+def _render_cookie_js(js: str) -> None:
+    """ينفّذ جافاسكربت صغيراً لكتابة/حذف الكوكي في المتصفح.
+
+    يستخدم ``st.html`` الحديثة مع ``unsafe_allow_javascript=True`` (البديل
+    الموصى به عن ``st.components.v1.html`` المهجور). محتوى ``st.html`` غير
+    موضوع في iframe، لذلك يُنفَّذ السكربت في أصل التطبيق نفسه وهذا ما يتيح
+    كتابة ``document.cookie``.
+    """
+    script_html = f"<script>{js}</script>"
+    try:
+        if hasattr(st, "html"):
+            st.html(script_html, unsafe_allow_javascript=True)
+        else:  # توافق مع إصدارات Streamlit الأقدم من 1.33
+            from streamlit.components.v1 import html as _legacy_html
+            _legacy_html(script_html, height=0)
+    except Exception:  # noqa: BLE001 - الكوكي ميزة إضافية، لا تُسقط التطبيق
+        pass
+
+
+def _remember_session(response) -> None:
+    """يحفظ رمز التجديد في كوكي بعد نجاح الدخول."""
+    token = getattr(getattr(response, "session", None), "refresh_token", None)
+    if token:
+        _render_cookie_js(
+            f"document.cookie='{_COOKIE_NAME}={token}; path=/; "
+            f"max-age={_COOKIE_MAX_AGE}; SameSite=Lax';")
+
+
+def _forget_session() -> None:
+    """يحذف الكوكي عند تسجيل الخروج."""
+    _render_cookie_js(f"document.cookie='{_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax';")
+
+
+def _read_session_cookie() -> str | None:
+    try:
+        return st.context.cookies.get(_COOKIE_NAME) or None
+    except Exception:  # noqa: BLE001 - غير متاح خارج المتصفح أو في الاختبارات
+        return None
+
+
+def restore_session() -> bool:
+    """يستعيد الجلسة من الكوكي بعد تحديث الصفحة. يعيد True إن صار المستخدم مسجّلاً."""
+    if is_logged_in():
+        return True
+    token = _read_session_cookie()
+    if not token:
+        return False
+    try:
+        response = supabase.auth.refresh_session(token)
+        user = getattr(response, "user", None)
+        if not user:
+            raise RuntimeError("لا يوجد مستخدم في الجلسة المستعادة.")
+        st.session_state["user"] = user
+        new_token = getattr(getattr(response, "session", None), "refresh_token", None)
+        if new_token and new_token != token:
+            _remember_session(response)
+        return True
+    except Exception:  # noqa: BLE001 - رمز منتهٍ أو غير صالح
+        _forget_session()
+        return False
+
+
+def _current_refresh_token() -> str | None:
+    try:
+        session = supabase.auth.get_session()
+        return getattr(session, "refresh_token", None)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def persist_session() -> None:
+    """يكتب رمز الجلسة الحالي في الكوكي إن لم يكن مطابقاً (البند 3.1).
+
+    تُستدعى في كل تشغيل بعد التأكد من تسجيل الدخول، على تشغيل مستقر (لا يتبعه
+    ``st.rerun`` فوراً) حتى يُنفَّذ سكربت الكوكي فعلاً في المتصفح.
+    """
+    if not is_logged_in():
+        return
+    token = _current_refresh_token()
+    if not token or _read_session_cookie() == token:
+        return
+    _render_cookie_js(
+        f"document.cookie='{_COOKIE_NAME}={token}; path=/; "
+        f"max-age={_COOKIE_MAX_AGE}; SameSite=Lax';")
