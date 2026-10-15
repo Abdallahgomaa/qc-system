@@ -1,0 +1,51 @@
+# مهمة دورية (Keep-alive) — البند 3.6
+#
+# الغرض: منع «الخمول» الذي يوقف مشروع Supabase المجاني (يتوقف بعد ~7 أيام بلا نشاط)
+# وكذلك منع نوم تطبيق Streamlit المنشور. تُشغَّل المهمة يومياً وتنفّذ طلباً بسيطاً
+# يجعل مشروع Supabase يُعدّ نشطاً.
+#
+# الإعداد لمرة واحدة (Settings ▸ Secrets and variables ▸ Actions ▸ New repository secret):
+#   - SUPABASE_URL : عنوان المشروع، مثال: https://<project-ref>.supabase.co
+#   - SUPABASE_KEY : المفتاح العام (Publishable / anon)
+#   - APP_URL      : (اختياري) عنوان التطبيق المنشور، مثال: https://xxxx.streamlit.app
+#
+# إن لم تُضَف الأسرار بعد فستفشل الخطوة المقابلة برسالة واضحة، ويمكن أيضاً تشغيل
+# المهمة يدوياً من تبويب Actions عبر «Run workflow».
+
+name: Keep-alive (طرد الخمول)
+
+on:
+  schedule:
+    # كل يوم الساعة 06:17 بالتوقيت العالمي (UTC)
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    name: تنبيه Supabase والتطبيق
+    runs-on: ubuntu-latest
+    steps:
+      - name: التحقق من توفّر الأسرار
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_KEY }}" ]; then
+            echo "::error::أضف السرّين SUPABASE_URL و SUPABASE_KEY من Settings ▸ Secrets and variables ▸ Actions."
+            exit 1
+          fi
+
+      - name: طلب إلى Supabase REST لمنع الخمول
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/projects?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}")
+          echo "Supabase REST HTTP $code"
+          test "$code" = "200"
+
+      - name: طلب إلى التطبيق المنشور (اختياري)
+        if: ${{ secrets.APP_URL != '' }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "${{ secrets.APP_URL }}/_stcore/health")
+          echo "App health HTTP $code"
+          test "$code" = "200"

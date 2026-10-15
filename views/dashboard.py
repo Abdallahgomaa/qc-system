@@ -5,7 +5,8 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from core import alerts, notify, records, report, ui
+from core import alerts, excel, notify, pwa, records, report, ui
+from views import calibration, concrete, materials, soil
 from views._common import show_flash
 
 try:  # الرسوم ميزة إضافية: إن لم تتوفر plotly نُكمل بلا رسوم
@@ -24,6 +25,84 @@ def _load(table: str, project_id: str):
 
 def _num(series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce")
+
+
+# ------------------------------------------------- العرض بدون اتصال (أ + ب + د)
+# (اسم الجدول، اسم ورقة Excel، عنوان القسم، حقول النموذج لتسمية الأعمدة عربياً)
+_SHEETS = (
+    ("concrete_pours", "الخرسانة", "قسم الخرسانة", concrete.FIELDS),
+    ("soil_receipts", "التربة", "قسم التربة", soil.FIELDS),
+    ("material_tests", "المواد", "قسم المواد", materials.FIELDS),
+    ("station_calibrations", "المعايرة", "قسم معايرة المحطات", calibration.FIELDS),
+)
+
+
+def _cell(value):
+    """قيمة خلية جاهزة للعرض بدون اتصال (تاريخ قصير، وعدد صحيح بلا «‎.0»)."""
+    try:
+        if value is None or pd.isna(value):
+            return ""
+    except (TypeError, ValueError):  # pd.isna قد تفشل مع أنواع غير قياسية
+        pass
+    if hasattr(value, "strftime"):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+def _labeled(frame, fields) -> pd.DataFrame:
+    """يعيد أعمدة القسم فقط بترويسات عربية (لتصدير Excel نظيف)."""
+    if frame is None or frame.empty:
+        return pd.DataFrame()
+    labels = {f["key"]: (f.get("label") or f["key"]) for f in fields if f.get("key")}
+    cols = [c for c in frame.columns if c in labels]
+    return frame[cols].rename(columns=labels) if cols else pd.DataFrame()
+
+
+def _snap_section(title: str, fields: list[dict], frame, limit: int = 200) -> dict:
+    """قسم في اللقطة المحلية: ترويسات عربية وأحدث ``limit`` سجلاً."""
+    if frame is None or frame.empty:
+        return {"name": title, "columns": [], "rows": []}
+    pairs = [(f["key"], f.get("label") or f["key"]) for f in fields if f.get("key") in frame.columns]
+    pairs = pairs[:6] or [(c, str(c)) for c in list(frame.columns)[:6]]
+    keys = [k for k, _ in pairs]
+    rows = [[_cell(rec.get(k)) for k in keys] for rec in frame.tail(limit).to_dict("records")]
+    return {"name": title, "columns": [lbl for _, lbl in pairs], "rows": rows}
+
+
+def _save_snapshot(project: dict, tables: dict, alert_items: list[dict], metrics: dict) -> None:
+    """يحفظ آخر ما قرأه المستخدم في متصفحه ليعمل العرض بدون اتصال (البند ب)."""
+    pwa.save_snapshot(
+        project=project.get("name", ""),
+        metrics=[{"label": k, "value": v} for k, v in metrics.items()],
+        alerts=[{"level": a.get("level", "warn"), "text": a.get("text", "")} for a in alert_items],
+        sections=[_snap_section(title, fields, tables.get(table))
+                  for table, _sheet, title, fields in _SHEETS],
+    )
+
+
+def _render_field_package(project: dict, tables: dict) -> None:
+    """حزمة العمل الميداني: كل الأقسام في ملف Excel واحد يُحفظ على الجهاز (البند د)."""
+    st.markdown("##### حزمة العمل الميداني (بدون اتصال)")
+    st.caption("ملف Excel واحد يجمع كل أقسام المشروع — احفظه على جهازك ليعمل معك في الموقع بدون شبكة.")
+    try:
+        bundle = excel.sheets_to_excel({
+            sheet: _labeled(tables.get(table), fields)
+            for table, sheet, _title, fields in _SHEETS
+        })
+    except Exception as e:  # noqa: BLE001
+        st.error(str(e))
+        return
+    code = "".join(ch for ch in str(project.get("code") or "project")
+                   if ch.isalnum() or ch in "-_")[:40]
+    st.download_button(
+        "تنزيل حزمة العمل الميداني (Excel)",
+        bundle,
+        file_name=f"CGES-field-package-{code or 'project'}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="field_pkg_dl",
+    )
 
 
 def render(project: dict) -> None:
@@ -47,20 +126,26 @@ def render(project: dict) -> None:
     if not soil.empty and "result" in soil:
         soil_pass = round((soil["result"] == "ناجح").mean() * 100, 1)
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("إجمالي الخرسانة (م³)", f"{total_volume:,.1f}")
-    c2.metric("اختبارات التربة", f"{len(soil)}")
-    c3.metric("نسبة نجاح التربة", f"{soil_pass}%")
-    c4.metric("سجلات المواد", f"{len(materials)}")
+    metrics = {
+        "إجمالي الخرسانة (م³)": f"{total_volume:,.1f}",
+        "اختبارات التربة": f"{len(soil)}",
+        "نسبة نجاح التربة": f"{soil_pass}%",
+        "سجلات المواد": f"{len(materials)}",
+    }
+    for col, (label, value) in zip(st.columns(len(metrics)), metrics.items()):
+        col.metric(label, value)
 
     alert_items = alerts.build_alerts(concrete=concrete, soil=soil,
                                       materials=materials, calibrations=calib)
+    tables = {"concrete_pours": concrete, "soil_receipts": soil,
+              "material_tests": materials, "station_calibrations": calib}
+
     _render_alerts(alert_items)
     _render_notify(project, alert_items)
+    _save_snapshot(project, tables, alert_items, metrics)
     _render_charts(concrete, soil)
-    _render_report(project, {"concrete_pours": concrete, "soil_receipts": soil,
-                             "material_tests": materials,
-                             "station_calibrations": calib}, alert_items)
+    _render_field_package(project, tables)
+    _render_report(project, tables, alert_items)
 
 
 def _render_alerts(items: list[dict]) -> None:

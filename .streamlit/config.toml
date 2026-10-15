@@ -11,6 +11,8 @@ primaryColor = "#B88A2E"
 
 [server]
 headless = true
+# تقديم ملفات المجلد ./static (أيقونة التطبيق وmanifest الـPWA) — البند (أ)
+enableStaticServing = true
 
 [browser]
 gatherUsageStats = false

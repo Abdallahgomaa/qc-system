@@ -1,7 +1,7 @@
 """مكوّنات الواجهة المشتركة: الشعار، رأس الصفحة، التنبيهات، شاشة الدخول."""
 import streamlit as st
 
-from core import auth
+from core import auth, pwa
 from core.config import APP_NAME_AR, APP_NAME_EN, APP_SHORT
 
 
@@ -21,6 +21,7 @@ def logo_svg(fg: str = "#FFFFFF", accent: str = "#D4AF5A", width: int = 220) -> 
 
 
 def page_header(title: str, subtitle: str = "") -> None:
+    pwa.inject()  # تثبيت التطبيق (PWA) + شريط «لا يوجد اتصال» — البند (أ)
     sub = f"<p>{subtitle}</p>" if subtitle else ""
     st.markdown(
         f'<div class="page-head"><h1>{title}</h1>{sub}<div class="dim-line"></div></div>',
@@ -38,6 +39,7 @@ def sidebar_brand() -> None:
 
 
 def login_screen() -> None:
+    pwa.inject()  # تثبيت التطبيق متاح حتى قبل الدخول (وضع مستقل بهوية CGES) — البند (أ)
     _, col, _ = st.columns([1, 1.4, 1])
     with col:
         st.markdown(

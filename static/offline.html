@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CGES — عرض بدون اتصال</title>
+<meta name="theme-color" content="#0F2540" />
+<link rel="manifest" href="/app/static/manifest.webmanifest" />
+<style>
+  :root{--bg:#F3F5F8;--surface:#fff;--text:#14263D;--muted:#5B6B7C;--border:#D9DFE7;--navy:#0F2540;--gold:#B88A2E;--ok:#1F8A5B;--warn:#B7740B;--bad:#C0392B}
+  @media (prefers-color-scheme:dark){:root{--bg:#0A1626;--surface:#12233B;--text:#E8EDF3;--muted:#9AA9BA;--border:#263B57;--navy:#07111F;--gold:#D4AF5A}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;line-height:1.6}
+  header{background:var(--navy);color:#E8EDF3;padding:14px 18px;border-bottom:3px solid var(--gold);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header img{width:38px;height:38px;border-radius:9px}
+  header b{font-size:1.05rem}
+  header span{color:var(--gold);font-size:.85rem}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .banner{background:#B7740B1A;border:1px solid var(--warn);color:var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:600}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .card .l{color:var(--muted);font-size:.78rem}
+  .card .v{font-size:1.35rem;font-weight:700}
+  .alert{border-radius:10px;padding:9px 13px;margin-bottom:8px;font-weight:600}
+  .alert.bad{background:#C0392B1A;border:1px solid var(--bad);color:var(--bad)}
+  .alert.warn{background:#B7740B1A;border:1px solid var(--warn);color:var(--warn)}
+  .ok{background:#1F8A5B1A;border:1px solid var(--ok);color:var(--ok);border-radius:10px;padding:9px 13px;font-weight:600}
+  section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px}
+  h2{font-size:1rem;margin:.2rem 0 .7rem;border-bottom:2px solid var(--gold);padding-bottom:6px}
+  .wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:.82rem;direction:rtl}
+  th,td{border:1px solid var(--border);padding:6px 8px;text-align:right;white-space:nowrap}
+  th{background:var(--navy);color:#E8EDF3;font-weight:600}
+  button{background:var(--gold);color:#1b1405;border:0;border-radius:9px;padding:9px 16px;font-weight:700;cursor:pointer;font-family:inherit}
+  .muted{color:var(--muted);font-size:.82rem}
+  footer{text-align:center;color:var(--muted);font-size:.78rem;padding:10px 0 26px}
+</style>
+</head>
+<body>
+<header>
+  <img src="/app/static/icon-192.png" alt="CGES" />
+  <div><b>CGES — نظام إدارة الجودة الهندسية</b><br /><span>عرض بيانات محفوظة بدون اتصال</span></div>
+</header>
+<main>
+  <div class="banner" id="banner">أنت الآن بدون اتصال بالإنترنت — هذه آخر بيانات حُفظت على هذا الجهاز (للقراءة فقط).</div>
+  <div id="meta" class="muted" style="margin-bottom:12px"></div>
+  <div id="app"></div>
+  <div style="text-align:center;margin:6px 0 18px"><button id="csv">تنزيل كل السجلات (CSV)</button></div>
+  <footer>تُحدَّث هذه النسخة تلقائياً عند فتح التطبيق مع وجود اتصال.</footer>
+</main>
+<script>
+var KEY = "cges_snapshot_v1";
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||"null");}catch(e){return null;}}
+var snap = load();
+var app = document.getElementById("app");
+if(!snap){
+  app.innerHTML = '<section><h2>لا توجد بيانات محفوظة</h2><p class="muted">افتح التطبيق مرة واحدة مع وجود اتصال، وسيُحفظ هنا آخر ما قرأته ليعمل هذا العرض بدون إنترنت.</p></section>';
+} else {
+  document.getElementById("banner").style.display = navigator.onLine ? "none" : "block";
+  document.getElementById("meta").textContent =
+    "المشروع: " + (snap.project||"—") + "  |  آخر تحديث: " + (snap.ts||"—");
+  var html = "";
+  var m = (snap.metrics||[]);
+  if(m.length){
+    html += '<div class="cards">' + m.map(function(x){
+      return '<div class="card"><div class="l">'+esc(x.label)+'</div><div class="v">'+esc(x.value)+'</div></div>';}).join("") + '</div>';
+  }
+  var al = (snap.alerts||[]);
+  html += (al.length ? al.map(function(a){
+      return '<div class="alert '+esc(a.level||"warn")+'">'+esc(a.text)+'</div>';}).join("")
+    : '<div class="ok">لا توجد تنبيهات في آخر تحديث.</div>');
+  (snap.sections||[]).forEach(function(s){
+    html += '<section><h2>'+esc(s.name)+' <span class="muted">('+(s.rows||[]).length+' سجل)</span></h2><div class="wrap"><table><thead><tr>';
+    html += (s.columns||[]).map(function(c){return '<th>'+esc(c)+'</th>';}).join("");
+    html += '</tr></thead><tbody>';
+    (s.rows||[]).forEach(function(r){
+      html += '<tr>' + r.map(function(c){return '<td>'+esc(c)+'</td>';}).join("") + '</tr>';
+    });
+    html += '</tbody></table></div></section>';
+  });
+  app.innerHTML = html;
+}
+document.getElementById("csv").onclick = function(){
+  if(!snap) return;
+  var lines = [];
+  (snap.sections||[]).forEach(function(s){
+    lines.push("# " + s.name);
+    lines.push((s.columns||[]).map(csvCell).join(","));
+    (s.rows||[]).forEach(function(r){ lines.push(r.map(csvCell).join(",")); });
+    lines.push("");
+  });
+  function csvCell(v){ v = v==null?"":String(v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+  var blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cges-field-data.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>
