@@ -9,6 +9,7 @@
 const CACHE = "cges-offline-v1";
 const ASSETS = [
   "/app/static/offline.html",
+  "/app/static/field.html",
   "/app/static/manifest.webmanifest",
   "/app/static/icon-192.png",
   "/app/static/icon-512.png",

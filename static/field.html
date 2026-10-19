@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CGES — الوضع الميداني</title>
+<meta name="theme-color" content="#0F2540" />
+<link rel="manifest" href="/app/static/manifest.webmanifest" />
+<link rel="icon" type="image/png" href="/app/static/icon-192.png" />
+<link rel="apple-touch-icon" href="/app/static/icon-192.png" />
+<style>
+  :root{--bg:#F3F5F8;--surface:#fff;--text:#14263D;--muted:#5B6B7C;--border:#D9DFE7;--navy:#0F2540;--gold:#B88A2E;--ok:#1F8A5B;--warn:#B7740B;--bad:#C0392B}
+  @media (prefers-color-scheme:dark){:root{--bg:#0A1626;--surface:#12233B;--text:#E8EDF3;--muted:#9AA9BA;--border:#263B57;--navy:#07111F;--gold:#D4AF5A}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;line-height:1.7}
+  header{background:var(--navy);color:#E8EDF3;padding:14px 18px;border-bottom:3px solid var(--gold);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header img{width:38px;height:38px;border-radius:9px}
+  header b{font-size:1.05rem}
+  header span{color:var(--gold);font-size:.85rem}
+  main{max-width:860px;margin:0 auto;padding:16px}
+  .banner{border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:600}
+  .banner.ok{background:#1F8A5B1A;border:1px solid var(--ok);color:var(--ok)}
+  .banner.warn{background:#B7740B1A;border:1px solid var(--warn);color:var(--warn)}
+  .banner.hide{display:none}
+  section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+  h2{font-size:1rem;margin:.1rem 0 .8rem;border-bottom:2px solid var(--gold);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  label{display:block;font-size:.82rem;color:var(--muted);margin:8px 0 3px}
+  input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font-family:inherit;font-size:.9rem}
+  input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .req{color:var(--bad);font-weight:700}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{background:var(--gold);color:#1b1405;border:0;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.9rem}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+  button.danger{background:var(--bad);color:#fff}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .badge{background:var(--gold);color:#1b1405;border-radius:999px;padding:2px 10px;font-size:.78rem}
+  .wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:.82rem}
+  th,td{border:1px solid var(--border);padding:6px 8px;text-align:right;vertical-align:top}
+  th{background:var(--navy);color:#E8EDF3;font-weight:600}
+  td.data{max-width:340px;white-space:pre-wrap;word-break:break-word;color:var(--muted)}
+  .muted{color:var(--muted);font-size:.82rem}
+  .del{background:var(--bad);color:#fff;padding:3px 10px;font-size:.75rem;border-radius:7px}
+  footer{text-align:center;color:var(--muted);font-size:.78rem;padding:6px 0 26px}
+  a.back{color:var(--gold);font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <img src="/app/static/icon-192.png" alt="CGES" />
+  <div><b>CGES — الوضع الميداني</b><br /><span>إدخال السجلات بدون اتصال ومزامنتها لاحقاً</span></div>
+</header>
+<main>
+  <div class="banner ok" id="netBanner">متصل بالإنترنت — يمكنك المزامنة في أي وقت.</div>
+  <div class="banner warn hide" id="offBanner">أنت الآن بدون اتصال — ستُحفظ السجلات في هذا الجهاز وتُرسل عند عودة الشبكة.</div>
+  <div class="banner warn hide" id="schemaBanner">لم يُحمّل مخطط الحقول بعد. افتح التطبيق مرة واحدة على هذا الجهاز (قسم «الوضع الميداني») ثم أعد تحميل هذه الصفحة.</div>
+
+  <section>
+    <h2>إدخال سجل جديد <span class="badge" id="countBadge">0 في الطابور</span></h2>
+    <div class="row">
+      <div>
+        <label for="sectionSel">القسم</label>
+        <select id="sectionSel"></select>
+      </div>
+    </div>
+    <div id="fields" class="row"></div>
+    <div class="actions">
+      <button id="saveBtn">حفظ في الطابور المحلي</button>
+      <button class="ghost" id="clearFormBtn">تفريغ الحقول</button>
+    </div>
+    <div class="muted" id="formMsg" style="margin-top:8px"></div>
+  </section>
+
+  <section>
+    <h2>الطابور المحلي (بانتظار المزامنة)</h2>
+    <div class="wrap">
+      <table>
+        <thead><tr><th style="width:110px">القسم</th><th>البيانات</th><th style="width:150px">وقت الإدخال</th><th style="width:70px">حذف</th></tr></thead>
+        <tbody id="queueBody"><tr><td colspan="4" class="muted">لا توجد سجلات في الطابور.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="syncBtn">مزامنة الآن مع التطبيق</button>
+      <button class="danger" id="wipeBtn">تفريغ الطابور</button>
+    </div>
+    <div class="muted" id="syncMsg" style="margin-top:8px"></div>
+  </section>
+
+  <div style="text-align:center;margin-bottom:10px"><a class="back" href="/">← العودة إلى التطبيق</a></div>
+  <footer>تُخزَّن السجلات في هذا المتصفح فقط حتى لحظة المزامنة.</footer>
+</main>
+<script>
+var SCHEMA_KEY = "cges_schema_v1";
+var QUEUE_KEY = "cges_queue_v1";
+var SCHEMA = null;
+var QUEUE = [];
+
+function readJSON(k, fallback) {
+  try { var v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? fallback : v; }
+  catch (e) { return fallback; }
+}
+function writeJSON(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { alert("تعذّر الحفظ في ذاكرة المتصفح: " + e.message); }
+}
+function sectionByTable(t) {
+  if (!SCHEMA) { return null; }
+  for (var i = 0; i < SCHEMA.sections.length; i++) { if (SCHEMA.sections[i].table === t) { return SCHEMA.sections[i]; } }
+  return null;
+}
+function el(tag, cls) { var e = document.createElement(tag); if (cls) { e.className = cls; } return e; }
+
+function buildSectionSelect() {
+  var sel = document.getElementById("sectionSel");
+  sel.innerHTML = "";
+  if (!SCHEMA) { return; }
+  SCHEMA.sections.forEach(function (s) {
+    var o = document.createElement("option");
+    o.value = s.table;
+    o.textContent = s.title;
+    sel.appendChild(o);
+  });
+}
+
+function buildFields() {
+  var host = document.getElementById("fields");
+  host.innerHTML = "";
+  var sec = sectionByTable(document.getElementById("sectionSel").value);
+  if (!sec) { return; }
+  sec.fields.forEach(function (f) {
+    var box = el("div");
+    var lab = el("label");
+    lab.setAttribute("for", "f_" + f.key);
+    lab.appendChild(document.createTextNode(f.label + " "));
+    if (f.required) { var r = el("span", "req"); r.textContent = "*"; lab.appendChild(r); }
+    box.appendChild(lab);
+    var input;
+    if (f.type === "select" && f.options && f.options.length) {
+      input = el("select");
+      var blank = el("option"); blank.value = ""; blank.textContent = "— اختر —"; input.appendChild(blank);
+      f.options.forEach(function (op) {
+        var o = el("option");
+        o.value = (typeof op === "object") ? (op.value != null ? op.value : op) : op;
+        o.textContent = (typeof op === "object") ? (op.label != null ? op.label : op.value) : op;
+        input.appendChild(o);
+      });
+    } else {
+      input = el("input");
+      input.type = (f.type === "number") ? "number" : (f.type === "date" ? "date" : "text");
+      if (f.type === "number") { input.step = "any"; }
+    }
+    input.id = "f_" + f.key;
+    input.setAttribute("data-key", f.key);
+    input.setAttribute("data-type", f.type || "text");
+    box.appendChild(input);
+    host.appendChild(box);
+  });
+}
+
+function collect() {
+  var sec = sectionByTable(document.getElementById("sectionSel").value);
+  if (!sec) { return null; }
+  var data = {}, missing = [];
+  sec.fields.forEach(function (f) {
+    var input = document.getElementById("f_" + f.key);
+    if (!input) { return; }
+    var v = (input.value || "").trim();
+    if (f.required && !v) { missing.push(f.label); return; }
+    if (!v) { return; }
+    if ((f.type === "number")) {
+      var n = Number(v);
+      data[f.key] = isNaN(n) ? v : n;
+    } else {
+      data[f.key] = v;
+    }
+  });
+  if (missing.length) { return { error: "حقول مطلوبة ناقصة: " + missing.join("، ") }; }
+  return { table: sec.table, title: sec.title, data: data };
+}
+
+function renderQueue() {
+  var body = document.getElementById("queueBody");
+  body.innerHTML = "";
+  document.getElementById("countBadge").textContent = QUEUE.length + " في الطابور";
+  if (!QUEUE.length) {
+    var tr = el("tr"), td = el("td", "muted");
+    td.colSpan = 4;
+    td.textContent = "لا توجد سجلات في الطابور.";
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+  QUEUE.forEach(function (item, i) {
+    var tr = el("tr");
+    var c1 = el("td"); c1.textContent = item.title || item.table;
+    var c2 = el("td", "data");
+    var parts = [];
+    for (var k in (item.data || {})) { parts.push(k + ": " + item.data[k]); }
+    c2.textContent = parts.join(" | ");
+    var c3 = el("td"); c3.textContent = item.ts || "";
+    var c4 = el("td");
+    var b = el("button", "del"); b.textContent = "حذف";
+    b.onclick = function () { del(i); };
+    c4.appendChild(b);
+    tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tr.appendChild(c4);
+    body.appendChild(tr);
+  });
+}
+
+function del(i) {
+  QUEUE.splice(i, 1);
+  writeJSON(QUEUE_KEY, QUEUE);
+  renderQueue();
+}
+
+function b64url(str) {
+  return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function networkBanner() {
+  var on = navigator.onLine;
+  document.getElementById("netBanner").className = "banner ok" + (on ? "" : " hide");
+  document.getElementById("offBanner").className = "banner warn" + (on ? " hide" : "");
+}
+window.addEventListener("online", networkBanner);
+window.addEventListener("offline", networkBanner);
+
+function init() {
+  SCHEMA = readJSON(SCHEMA_KEY, null);
+  QUEUE = readJSON(QUEUE_KEY, []);
+  if (!QUEUE || !QUEUE.length) { QUEUE = []; }
+  if (!SCHEMA || !SCHEMA.sections || !SCHEMA.sections.length) {
+    document.getElementById("schemaBanner").className = "banner warn";
+    document.getElementById("saveBtn").disabled = true;
+    document.getElementById("syncBtn").disabled = true;
+  } else {
+    buildSectionSelect();
+    buildFields();
+  }
+  networkBanner();
+  renderQueue();
+}
+
+document.getElementById("sectionSel").onchange = buildFields;
+
+document.getElementById("saveBtn").onclick = function () {
+  var r = collect();
+  var msg = document.getElementById("formMsg");
+  if (!r) { return; }
+  if (r.error) { msg.textContent = r.error; msg.style.color = "var(--bad)"; return; }
+  QUEUE.push({ table: r.table, title: r.title, data: r.data, ts: new Date().toLocaleString("ar-EG") });
+  writeJSON(QUEUE_KEY, QUEUE);
+  renderQueue();
+  buildFields();
+  msg.textContent = "تم حفظ السجل في الطابور المحلي ✓";
+  msg.style.color = "var(--ok)";
+};
+
+document.getElementById("clearFormBtn").onclick = function () {
+  buildFields();
+  document.getElementById("formMsg").textContent = "";
+};
+
+document.getElementById("syncBtn").onclick = function () {
+  var msg = document.getElementById("syncMsg");
+  if (!QUEUE.length) { msg.textContent = "الطابور فارغ — لا يوجد ما يُزامن."; msg.style.color = "var(--warn)"; return; }
+  if (!navigator.onLine) { msg.textContent = "لا يوجد اتصال بالإنترنت حالياً. أعد المحاولة بعد عودة الشبكة."; msg.style.color = "var(--warn)"; return; }
+  var payload = b64url(JSON.stringify(QUEUE));
+  if (payload.length > 60000) { msg.textContent = "حجم الطابور كبير جداً للمزامنة دفعة واحدة — زامن على دفعات."; msg.style.color = "var(--bad)"; return; }
+  msg.textContent = "جارٍ إرسال السجلات إلى التطبيق…";
+  location.href = "/?cges_queue=" + payload;
+};
+
+document.getElementById("wipeBtn").onclick = function () {
+  if (!QUEUE.length) { return; }
+  if (!confirm("هل أنت متأكد من تفريغ الطابور المحلي؟ سيتم فقدان كل السجلات غير المُزامَنة.")) { return; }
+  QUEUE = [];
+  writeJSON(QUEUE_KEY, QUEUE);
+  renderQueue();
+  document.getElementById("syncMsg").textContent = "تم تفريغ الطابور.";
+  document.getElementById("syncMsg").style.color = "var(--muted)";
+};
+
+init();
+</script>
+</body>
+</html>

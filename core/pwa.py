@@ -38,20 +38,21 @@ def _inject_html(markup: str) -> None:
 _JS = r"""
 (function () {
   var head = document.head;
-  function add(tag, attrs) {
-    if (head.querySelector(tag + '[data-cges="1"]')) return;
+  function add(tag, name, attrs) {
+    if (document.getElementById(name)) { return; }
     var el = document.createElement(tag);
-    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    for (var k in attrs) { el.setAttribute(k, attrs[k]); }
+    el.id = name;
     el.setAttribute("data-cges", "1");
     head.appendChild(el);
   }
-  add("link", { rel: "manifest", href: "__MANIFEST__" });
-  add("link", { rel: "icon", type: "image/png", href: "/app/static/icon-192.png" });
-  add("link", { rel: "apple-touch-icon", href: "/app/static/icon-192.png" });
-  add("meta", { name: "theme-color", content: "__THEME__" });
-  add("meta", { name: "mobile-web-app-capable", content: "yes" });
-  add("meta", { name: "apple-mobile-web-app-capable", content: "yes" });
-  add("meta", { name: "apple-mobile-web-app-title", content: "CGES" });
+  add("link", "cges-manifest", { rel: "manifest", href: "__MANIFEST__" });
+  add("link", "cges-icon", { rel: "icon", type: "image/png", href: "/app/static/icon-192.png" });
+  add("link", "cges-apple-icon", { rel: "apple-touch-icon", href: "/app/static/icon-192.png" });
+  add("meta", "cges-theme-color", { name: "theme-color", content: "__THEME__" });
+  add("meta", "cges-mobile-capable", { name: "mobile-web-app-capable", content: "yes" });
+  add("meta", "cges-apple-capable", { name: "apple-mobile-web-app-capable", content: "yes" });
+  add("meta", "cges-apple-title", { name: "apple-mobile-web-app-title", content: "CGES" });
 
   if ("serviceWorker" in navigator && !window.__cgesSW) {
     window.__cgesSW = true;
@@ -60,19 +61,30 @@ _JS = r"""
 
   function bar() {
     var el = document.getElementById("cges-offline-bar");
-    if (navigator.onLine) { if (el) el.remove(); return; }
-    if (el) return;
-    el = document.createElement("div");
-    el.id = "cges-offline-bar";
-    el.dir = "rtl";
-    el.style.cssText =
-      "position:fixed;top:0;right:0;left:0;z-index:99999;background:#B7740B;color:#fff;" +
-      "font:600 14px 'IBM Plex Sans Arabic',Tahoma,sans-serif;padding:9px 14px;text-align:center;" +
-      "box-shadow:0 2px 10px rgba(0,0,0,.25)";
-    el.innerHTML =
-      "لا يوجد اتصال بالإنترنت — ما يظهر أمامك آخر بيانات محمّلة. " +
-      '<a href="__OFFLINE__" style="color:#fff;text-decoration:underline">فتح النسخة المحفوظة</a>';
-    document.body.appendChild(el);
+    if (navigator.onLine) { if (el && el.parentNode) { el.parentNode.removeChild(el); } return; }
+    if (el) { return; }
+    var bar = document.createElement("div");
+    bar.id = "cges-offline-bar";
+    bar.dir = "rtl";
+    bar.style.position = "fixed";
+    bar.style.top = "0";
+    bar.style.right = "0";
+    bar.style.left = "0";
+    bar.style.zIndex = "99999";
+    bar.style.background = "#B7740B";
+    bar.style.color = "#fff";
+    bar.style.font = "600 14px sans-serif";
+    bar.style.padding = "9px 14px";
+    bar.style.textAlign = "center";
+    bar.style.boxShadow = "0 2px 10px rgba(0,0,0,.25)";
+    bar.appendChild(document.createTextNode("لا يوجد اتصال بالإنترنت — ما يظهر أمامك آخر بيانات محمّلة. "));
+    var link = document.createElement("a");
+    link.setAttribute("href", "__OFFLINE__");
+    link.style.color = "#fff";
+    link.style.textDecoration = "underline";
+    link.appendChild(document.createTextNode("\u0627\u0644\u0646\u0633\u062e\u0629 \u0627\u0644\u0645\u062d\u0641\u0648\u0638\u0629"));
+    bar.appendChild(link);
+    document.body.appendChild(bar);
   }
   if (!window.__cgesNet) {
     window.__cgesNet = true;
@@ -141,3 +153,30 @@ def save_snapshot(*, project: str, metrics: list | None = None,
         "<script>try{localStorage.setItem(%s,%s);}catch(e){}</script>"
         % (json.dumps(SNAPSHOT_KEY), literal)
     )
+
+
+# ---------------------------------------------------------------------------
+# مخطط الحقول والطابور المحلي (البند ج — الوضع الميداني)
+# ---------------------------------------------------------------------------
+SCHEMA_KEY = "cges_schema_v1"
+QUEUE_KEY = "cges_queue_v1"
+
+
+def run_js(js: str) -> None:
+    """ينفّذ جافاسكربت صغيراً في المتصفح (بصمت عند الفشل)."""
+    _inject_html("<script>try{%s}catch(e){}</script>" % js)
+
+
+def save_schema(schema: dict) -> None:
+    """يحفظ مخطط حقول الوضع الميداني في المتصفح لتعمل صفحة الإدخال بدون اتصال."""
+    try:
+        blob = json.dumps(schema, ensure_ascii=False).replace("</", "<\\/")
+        literal = json.dumps(blob)
+    except Exception:  # noqa: BLE001
+        return
+    run_js("localStorage.setItem(%s,%s);" % (json.dumps(SCHEMA_KEY), literal))
+
+
+def clear_queue() -> None:
+    """يفرّغ طابور الوضع الميداني المحلي بعد نجاح المزامنة."""
+    run_js("localStorage.removeItem(%s);" % json.dumps(QUEUE_KEY))

@@ -56,3 +56,42 @@ def login_screen() -> None:
                     st.rerun()
                 else:
                     st.error(msg)
+
+
+_CLEAN_CSS = """
+<style>
+/* إخفاء شريط أدوات وسيرفر Streamlit وعلامة التاج والـ Fork بالكامل */
+[data-testid="stToolbar"] {visibility: hidden; height: 0%; position: fixed;}
+.stDeployButton {display: none !important;}
+footer {visibility: hidden !important;}
+#MainMenu {visibility: hidden !important;}
+header {visibility: hidden !important;}
+
+/* إزالة أي خطوط فاصلة مزعجة أو حدود ظاهرة في منتصف الشاشة على الموبايل */
+[data-testid="stSidebarNav"] {background-color: transparent;}
+[data-testid="collapsedControl"] {display: block;}
+
+/* تحسين الفراغات وتجربة المستخدم (UX) على الشاشات الصغيرة والموبايل */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+        padding-top: 1rem;
+    }
+}
+</style>
+"""
+
+
+def clean_ui() -> None:
+    """ينظّف واجهة Streamlit (إخفاء شريط الأدوات والقوائم) ويهيّئ دعم PWA.
+
+    تُستدعى مرة واحدة في كل تشغيل من ``app.py`` (شاشة الدخول والتطبيق)، فتعمل
+    كحقن عام: وسوم تثبيت التطبيق + Service Worker + شريط «لا يوجد اتصال»
+    (البند أ) مع تنسيقات CSS لإخفاء عناصر Streamlit الافتراضية.
+
+    وتستورد هنا طابور الوضع الميداني القادم عبر الرابط ``?cges_queue=``
+    (البند ج)، لتعمل المزامنة عند فتح أي صفحة لا صفحة الوضع الميداني وحدها.
+    """
+    pwa.inject()
+    st.markdown(_CLEAN_CSS, unsafe_allow_html=True)
