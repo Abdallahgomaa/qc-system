@@ -18,7 +18,7 @@ CSS = Template("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 :root{--bg:$bg;--surface:$surface;--text:$text;--muted:$muted;--border:$border;--navy:$navy;
---navy-text:$navy_text;--gold:$gold;--gold-soft:$gold_soft;--ok:$ok;--warn:$warn;--bad:$bad;--hover:$hover;}
+--navy-text:$navy_text;--gold:$gold;--gold-soft:$gold_soft;--accent:$gold;--ok:$ok;--warn:$warn;--bad:$bad;--hover:$hover;}
 
 html, body, .stApp, [data-testid="stAppViewContainer"], button, input, textarea, select{
   font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif !important;}
@@ -30,28 +30,32 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 [data-testid="stCaptionContainer"]{color:var(--muted);}
 
 /* ---------- القائمة الجانبية ---------- */
-[data-testid="stSidebar"]{background:var(--navy);border-left:3px solid var(--gold);direction:rtl;}
-[data-testid="stSidebar"] *{color:var(--navy-text);}
-[data-testid="stSidebar"] hr{border-color:rgba(255,255,255,.14);}
+[data-testid="stSidebar"]{background:var(--surface);border-left:1px solid var(--border);direction:rtl;}
+[data-testid="stSidebar"] *{color:var(--text);}
+[data-testid="stSidebar"] hr{border-color:var(--border);}
 [data-testid="stSidebar"] [data-baseweb="select"] > div{
-  background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22);}
-[data-testid="stSidebar"] .stRadio label{padding:.55rem .7rem;border-radius:6px;width:100%;}
-[data-testid="stSidebar"] .stRadio label:hover{background:rgba(255,255,255,.08);}
+  background:var(--bg);border-color:var(--border);}
+[data-testid="stSidebar"] .stRadio label{padding:.55rem .7rem;border-radius:10px;width:100%;
+  transition:background .18s ease;}
+[data-testid="stSidebar"] .stRadio label:hover{background:var(--hover);}
 [data-testid="stSidebar"] .stRadio label:has(input:checked){
-  background:rgba(212,175,90,.16);box-shadow:inset -3px 0 0 var(--gold-soft);}
-.side-user{font-size:.85rem;opacity:.85;margin:.4rem 0 1rem;}
+  background:rgba(184,138,46,.14);box-shadow:inset -3px 0 0 var(--gold);}
+.side-user{font-size:.85rem;color:var(--muted);margin:.4rem 0 1rem;}
 
 /* ---------- عنوان الصفحة: خط أبعاد هندسي ---------- */
 .page-head{margin:0 0 1.6rem;}
 .page-head h1{font-size:1.7rem;font-weight:700;margin:0 0 .2rem;color:var(--text);}
 .page-head p{margin:0;color:var(--muted);font-size:.95rem;}
-.dim-line{position:relative;height:1px;background:var(--gold);margin-top:.9rem;max-width:420px;}
-.dim-line::before,.dim-line::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--gold);}
+.dim-line{position:relative;height:1px;background:var(--accent);margin-top:.9rem;max-width:420px;}
+.dim-line::before,.dim-line::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--accent);}
 .dim-line::before{right:0;} .dim-line::after{left:0;}
 
 /* ---------- المؤشرات ---------- */
 [data-testid="stMetric"]{background:var(--surface);border:1px solid var(--border);
-  border-top:3px solid var(--gold);border-radius:4px;padding:1rem 1.1rem;}
+  border-radius:14px;padding:1rem 1.1rem;box-shadow:0 2px 10px rgba(20,38,61,.04);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
+[data-testid="stMetric"]:hover{transform:translateY(-2px);
+  box-shadow:0 10px 26px rgba(184,138,46,.12);border-color:rgba(184,138,46,.35);}
 [data-testid="stMetricLabel"] *{color:var(--muted) !important;font-weight:500;}
 [data-testid="stMetricValue"]{color:var(--text);font-weight:700;}
 
@@ -61,12 +65,18 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 .stTabs [aria-selected="true"]{color:var(--text);font-weight:600;}
 .stTabs [data-baseweb="tab-highlight"]{background:var(--gold);}
 .stButton>button,.stDownloadButton>button,.stFormSubmitButton>button,[data-testid="stLinkButton"] a{
-  border-radius:4px;border:1px solid var(--navy);font-weight:600;min-height:2.6rem;}
+  border-radius:10px;border:1px solid var(--border);font-weight:600;min-height:2.6rem;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;}
+.stButton>button:hover,.stDownloadButton>button:hover,[data-testid="stLinkButton"] a:hover{
+  background:var(--hover);box-shadow:0 4px 14px rgba(20,38,61,.10);transform:translateY(-1px);}
 .stFormSubmitButton>button[kind="primary"],.stButton>button[kind="primary"]{
-  background:var(--navy);color:#fff;border-color:var(--navy);}
+  background:var(--navy);color:#fff;border-color:var(--navy);
+  box-shadow:0 4px 14px rgba(15,37,64,.22);}
 .stFormSubmitButton>button[kind="primary"]:hover,.stButton>button[kind="primary"]:hover{
-  background:var(--gold);border-color:var(--gold);color:#fff;}
-[data-testid="stForm"]{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1.2rem;}
+  background:var(--gold);border-color:var(--gold);color:#fff;
+  box-shadow:0 6px 20px rgba(184,138,46,.34);transform:translateY(-1px);}
+[data-testid="stForm"]{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;
+  box-shadow:0 2px 10px rgba(20,38,61,.04);}
 :focus-visible{outline:2px solid var(--gold) !important;outline-offset:2px;}
 
 /* ---------- التنبيهات الذكية ---------- */
