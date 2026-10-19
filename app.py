@@ -7,7 +7,9 @@ st.set_page_config(page_title="CGES | المجموعة الاستشارية", pa
 from core import auth, db, theme, ui  # noqa: E402
 from core.config import ROLE_LABELS  # noqa: E402
 
-dark = st.session_state.get("dark_mode", False)
+# الوضع الداكن هو الافتراضي للنظام (هوية e& الداكنة)، مع إبقاء مفتاح التبديل
+# في القائمة الجانبية لمن يفضّل الوضع الفاتح.
+dark = st.session_state.get("dark_mode", True)
 st.markdown(theme.build_css("dark" if dark else "light"), unsafe_allow_html=True)
 
 # تنظيف واجهة Streamlit (إخفاء شريط الأدوات/القوائم) + تهيئة PWA والوضع بدون اتصال
