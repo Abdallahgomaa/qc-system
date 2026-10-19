@@ -1,20 +1,23 @@
 """نظام الألوان والـ CSS (فاتح/داكن). كل الألوان متغيّرات CSS لسهولة التعديل لاحقاً."""
 from string import Template
 
+# هوية e& : الأحمر هو اللون الأساسي (accent)، والكحلي يبقى إطار الهوية الثانوي.
+# gold/gold_soft محفوظان كأسماء تاريخية لكنهما يشيران الآن لأحمر e& حتى تتبع
+# كل القواعد القديمة (التي تستخدم var(--gold)) اللون الجديد تلقائياً.
 PALETTES = {
     "light": dict(
-        bg="#F3F5F8", surface="#FFFFFF", text="#14263D", muted="#5B6B7C", border="#D9DFE7",
-        navy="#0F2540", navy_text="#E8EDF3", gold="#B88A2E", gold_soft="#D4AF5A",
-        ok="#1F8A5B", warn="#B7740B", bad="#C0392B", hover="#EEF2F7",
-        accent_tint="rgba(184,138,46,.14)", accent_line="rgba(184,138,46,.35)",
-        accent_glow="rgba(184,138,46,.12)", shadow="rgba(20,38,61,.04)",
+        bg="#F3F5F8", surface="#FFFFFF", text="#1F2937", muted="#6B7280", border="#E5E7EB",
+        navy="#0F2540", navy_text="#E8EDF3", gold="#E30613", gold_soft="#C10510",
+        ok="#1F8A5B", warn="#B7740B", bad="#C0392B", hover="#F3F4F6",
+        accent_tint="rgba(227,6,19,.08)", accent_line="rgba(227,6,19,.25)",
+        accent_glow="rgba(227,6,19,.12)", shadow="rgba(0,0,0,.05)",
     ),
     "dark": dict(
         bg="#0A1626", surface="#12233B", text="#E8EDF3", muted="#9AA9BA", border="#263B57",
-        navy="#07111F", navy_text="#E8EDF3", gold="#D4AF5A", gold_soft="#D4AF5A",
+        navy="#07111F", navy_text="#E8EDF3", gold="#FF3B47", gold_soft="#E30613",
         ok="#3DBE8B", warn="#E3A33B", bad="#EF6B5B", hover="#183150",
-        accent_tint="rgba(212,175,90,.16)", accent_line="rgba(212,175,90,.38)",
-        accent_glow="rgba(212,175,90,.14)", shadow="rgba(0,0,0,.28)",
+        accent_tint="rgba(255,59,71,.16)", accent_line="rgba(255,59,71,.38)",
+        accent_glow="rgba(255,59,71,.14)", shadow="rgba(0,0,0,.28)",
     ),
 }
 
@@ -23,7 +26,7 @@ CSS = Template("""
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 :root{--bg:$bg;--surface:$surface;--text:$text;--muted:$muted;--border:$border;--navy:$navy;
 --navy-text:$navy_text;--gold:$gold;--gold-soft:$gold_soft;--ok:$ok;--warn:$warn;--bad:$bad;--hover:$hover;
---accent:$gold;--accent-soft:$gold_soft;
+--accent:$gold;--accent-soft:$gold_soft;--brand:#E30613;
 --accent-tint:$accent_tint;--accent-line:$accent_line;--accent-glow:$accent_glow;
 --shadow:$shadow;}
 
@@ -70,6 +73,9 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 [data-testid="stMetricLabel"] *{color:var(--muted) !important;font-weight:600;
   font-size:.82rem;letter-spacing:.01em;}
 [data-testid="stMetricValue"]{color:var(--text);font-weight:700;font-size:1.65rem;}
+[data-testid="stMetric"],[data-testid="stMetricLabel"],[data-testid="stMetricValue"]{
+  text-align:center;}
+[data-testid="stMetricLabel"]{justify-content:center;}
 /* خط تمييز رفيع يمتد من بداية صف المؤشرات */
 [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"])::before{content:"";display:block;}
 
@@ -151,6 +157,8 @@ table.cges-table tbody tr:hover td{background:var(--hover);}
   [data-testid="stMetricLabel"]{font-size:.8rem;}
   .stButton>button,.stFormSubmitButton>button,.stDownloadButton>button,
   [data-testid="stLinkButton"] a{width:100%;}
+  /* منطقة الإبهام: أزرار أعلى وأوضح للمس باليد الواحدة */
+  .stButton>button,.stFormSubmitButton>button,.stDownloadButton>button{height:50px;font-size:16px;}
   [data-testid="stForm"]{padding:.9rem;}
   /* حقول النماذج: كل حقل في سطر كامل لسهولة اللمس */
   [data-testid="stForm"] [data-testid="stHorizontalBlock"]{flex-wrap:wrap;}
