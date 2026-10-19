@@ -56,8 +56,13 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
   transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
 [data-testid="stMetric"]:hover{transform:translateY(-2px);
   box-shadow:0 10px 26px rgba(184,138,46,.12);border-color:rgba(184,138,46,.35);}
-[data-testid="stMetricLabel"] *{color:var(--muted) !important;font-weight:500;}
-[data-testid="stMetricValue"]{color:var(--text);font-weight:700;}
+[data-testid="stMetricLabel"] *{color:var(--muted) !important;font-weight:600;
+  font-size:.82rem;letter-spacing:.01em;}
+[data-testid="stMetricValue"]{color:var(--text);font-weight:700;font-size:1.65rem;}
+
+/* ---------- الكروت العامة (البطاقات البيضاء العصرية) ---------- */
+[data-testid="stForm"],[data-testid="stExpander"],[data-testid="stDataFrame"]{
+  background:var(--surface);box-shadow:0 2px 10px rgba(20,38,61,.04);}
 
 /* ---------- التبويبات والأزرار والحقول ---------- */
 .stTabs [data-baseweb="tab-list"]{gap:.25rem;border-bottom:1px solid var(--border);}
