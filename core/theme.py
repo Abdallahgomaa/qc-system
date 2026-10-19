@@ -6,11 +6,15 @@ PALETTES = {
         bg="#F3F5F8", surface="#FFFFFF", text="#14263D", muted="#5B6B7C", border="#D9DFE7",
         navy="#0F2540", navy_text="#E8EDF3", gold="#B88A2E", gold_soft="#D4AF5A",
         ok="#1F8A5B", warn="#B7740B", bad="#C0392B", hover="#EEF2F7",
+        accent_tint="rgba(184,138,46,.14)", accent_line="rgba(184,138,46,.35)",
+        accent_glow="rgba(184,138,46,.12)", shadow="rgba(20,38,61,.04)",
     ),
     "dark": dict(
         bg="#0A1626", surface="#12233B", text="#E8EDF3", muted="#9AA9BA", border="#263B57",
         navy="#07111F", navy_text="#E8EDF3", gold="#D4AF5A", gold_soft="#D4AF5A",
         ok="#3DBE8B", warn="#E3A33B", bad="#EF6B5B", hover="#183150",
+        accent_tint="rgba(212,175,90,.16)", accent_line="rgba(212,175,90,.38)",
+        accent_glow="rgba(212,175,90,.14)", shadow="rgba(0,0,0,.28)",
     ),
 }
 
@@ -18,7 +22,10 @@ CSS = Template("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 :root{--bg:$bg;--surface:$surface;--text:$text;--muted:$muted;--border:$border;--navy:$navy;
---navy-text:$navy_text;--gold:$gold;--gold-soft:$gold_soft;--accent:$gold;--ok:$ok;--warn:$warn;--bad:$bad;--hover:$hover;}
+--navy-text:$navy_text;--gold:$gold;--gold-soft:$gold_soft;--ok:$ok;--warn:$warn;--bad:$bad;--hover:$hover;
+--accent:$gold;--accent-soft:$gold_soft;
+--accent-tint:$accent_tint;--accent-line:$accent_line;--accent-glow:$accent_glow;
+--shadow:$shadow;}
 
 html, body, .stApp, [data-testid="stAppViewContainer"], button, input, textarea, select{
   font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif !important;}
@@ -36,10 +43,13 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 [data-testid="stSidebar"] [data-baseweb="select"] > div{
   background:var(--bg);border-color:var(--border);}
 [data-testid="stSidebar"] .stRadio label{padding:.55rem .7rem;border-radius:10px;width:100%;
-  transition:background .18s ease;}
-[data-testid="stSidebar"] .stRadio label:hover{background:var(--hover);}
+  transition:background .18s ease,box-shadow .18s ease;}
+[data-testid="stSidebar"] .stRadio label:hover{background:var(--hover);
+  box-shadow:inset -3px 0 0 var(--accent-line);}
 [data-testid="stSidebar"] .stRadio label:has(input:checked){
-  background:rgba(184,138,46,.14);box-shadow:inset -3px 0 0 var(--gold);}
+  background:var(--accent-tint);box-shadow:inset -3px 0 0 var(--accent);}
+/* شريط علوي رفيع بلون التمييز أعلى القائمة الجانبية */
+[data-testid="stSidebar"] > div:first-child{border-top:3px solid var(--accent);}
 .side-user{font-size:.85rem;color:var(--muted);margin:.4rem 0 1rem;}
 
 /* ---------- عنوان الصفحة: خط أبعاد هندسي ---------- */
@@ -52,48 +62,63 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 
 /* ---------- المؤشرات ---------- */
 [data-testid="stMetric"]{background:var(--surface);border:1px solid var(--border);
-  border-radius:14px;padding:1rem 1.1rem;box-shadow:0 2px 10px rgba(20,38,61,.04);
+  border-radius:14px;padding:1rem 1.1rem;box-shadow:0 2px 10px var(--shadow);
+  border-top:3px solid var(--accent);
   transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
 [data-testid="stMetric"]:hover{transform:translateY(-2px);
-  box-shadow:0 10px 26px rgba(184,138,46,.12);border-color:rgba(184,138,46,.35);}
+  box-shadow:0 10px 26px var(--accent-glow);border-color:var(--accent-line);}
 [data-testid="stMetricLabel"] *{color:var(--muted) !important;font-weight:600;
   font-size:.82rem;letter-spacing:.01em;}
 [data-testid="stMetricValue"]{color:var(--text);font-weight:700;font-size:1.65rem;}
+/* خط تمييز رفيع يمتد من بداية صف المؤشرات */
+[data-testid="stHorizontalBlock"]:has([data-testid="stMetric"])::before{content:"";display:block;}
 
 /* ---------- الكروت العامة (البطاقات البيضاء العصرية) ---------- */
 [data-testid="stForm"],[data-testid="stExpander"],[data-testid="stDataFrame"]{
-  background:var(--surface);box-shadow:0 2px 10px rgba(20,38,61,.04);}
+  background:var(--surface);box-shadow:0 2px 10px var(--shadow);}
+[data-testid="stExpander"]{border:1px solid var(--border);border-radius:14px;
+  transition:border-color .2s ease;}
+[data-testid="stExpander"]:hover{border-color:var(--accent-line);}
+[data-testid="stExpander"] summary{border-bottom:1px solid transparent;
+  transition:border-color .2s ease;}
+[data-testid="stExpander"][open] summary,
+[data-testid="stExpander"] details[open] summary{border-bottom-color:var(--accent-tint);}
 
 /* ---------- التبويبات والأزرار والحقول ---------- */
 .stTabs [data-baseweb="tab-list"]{gap:.25rem;border-bottom:1px solid var(--border);}
-.stTabs [data-baseweb="tab"]{height:2.6rem;color:var(--muted);}
+.stTabs [data-baseweb="tab"]{height:2.6rem;color:var(--muted);border-radius:10px 10px 0 0;
+  transition:background .18s ease,color .18s ease;}
+.stTabs [data-baseweb="tab"]:hover{background:var(--hover);color:var(--text);}
 .stTabs [aria-selected="true"]{color:var(--text);font-weight:600;}
-.stTabs [data-baseweb="tab-highlight"]{background:var(--gold);}
+.stTabs [data-baseweb="tab-highlight"]{background:var(--accent);height:3px;}
+.stTabs [data-baseweb="tab-border"]{background:transparent;}
 .stButton>button,.stDownloadButton>button,.stFormSubmitButton>button,[data-testid="stLinkButton"] a{
   border-radius:10px;border:1px solid var(--border);font-weight:600;min-height:2.6rem;
   transition:transform .18s ease,box-shadow .18s ease,background .18s ease;}
 .stButton>button:hover,.stDownloadButton>button:hover,[data-testid="stLinkButton"] a:hover{
-  background:var(--hover);box-shadow:0 4px 14px rgba(20,38,61,.10);transform:translateY(-1px);}
+  background:var(--hover);box-shadow:0 4px 14px var(--shadow);transform:translateY(-1px);
+  border-color:var(--accent-line);}
 .stFormSubmitButton>button[kind="primary"],.stButton>button[kind="primary"]{
   background:var(--navy);color:#fff;border-color:var(--navy);
   box-shadow:0 4px 14px rgba(15,37,64,.22);}
 .stFormSubmitButton>button[kind="primary"]:hover,.stButton>button[kind="primary"]:hover{
-  background:var(--gold);border-color:var(--gold);color:#fff;
-  box-shadow:0 6px 20px rgba(184,138,46,.34);transform:translateY(-1px);}
+  background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 6px 20px var(--accent-line);transform:translateY(-1px);}
 [data-testid="stForm"]{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;
-  box-shadow:0 2px 10px rgba(20,38,61,.04);}
-:focus-visible{outline:2px solid var(--gold) !important;outline-offset:2px;}
+  box-shadow:0 2px 10px var(--shadow);}
+:focus-visible{outline:2px solid var(--accent) !important;outline-offset:2px;}
 
 /* ---------- التنبيهات الذكية ---------- */
 .alert{background:var(--surface);border:1px solid var(--border);border-right:4px solid var(--muted);
-  border-radius:4px;padding:.7rem 1rem;margin:.4rem 0;font-size:.95rem;}
+  border-radius:12px;padding:.7rem 1rem;margin:.4rem 0;font-size:.95rem;
+  box-shadow:0 2px 10px var(--shadow);}
 .alert.bad{border-right-color:var(--bad);} .alert.warn{border-right-color:var(--warn);}
 .alert.ok{border-right-color:var(--ok);}
 .alert b{margin-left:.4rem;}
 
 /* ---------- شاشة الدخول ---------- */
-.login-brand{background:var(--navy);padding:2rem 1.5rem 1.6rem;border-radius:4px 4px 0 0;
-  border-bottom:3px solid var(--gold);text-align:center;direction:ltr;}
+.login-brand{background:var(--navy);padding:2rem 1.5rem 1.6rem;border-radius:14px 14px 0 0;
+  border-bottom:3px solid var(--accent);text-align:center;direction:ltr;}
 .login-brand .ar{color:var(--navy-text);margin-top:.9rem;font-size:1rem;font-weight:500;direction:rtl;}
 .login-brand .en{color:var(--gold-soft);font-size:.78rem;letter-spacing:.08em;margin-top:.2rem;}
 .sidebar-brand{padding:.4rem 0 .8rem;direction:ltr;}
