@@ -2,15 +2,13 @@
 import streamlit as st
 
 st.set_page_config(page_title="CGES | المجموعة الاستشارية", page_icon="🏗️",
-                   layout="wide", initial_sidebar_state="auto")
+                   layout="wide", initial_sidebar_state="collapsed")
 
 from core import auth, db, theme, ui  # noqa: E402
 from core.config import ROLE_LABELS  # noqa: E402
 
-# الوضع الداكن هو الافتراضي للنظام (هوية e& الداكنة)، مع إبقاء مفتاح التبديل
-# في القائمة الجانبية لمن يفضّل الوضع الفاتح.
-dark = st.session_state.get("dark_mode", True)
-st.markdown(theme.build_css("dark" if dark else "light"), unsafe_allow_html=True)
+# الوضع الداكن مثبَّت نهائياً (هوية e& الداكنة) — لا يوجد مسار للوضع الفاتح.
+st.markdown(theme.build_css("dark"), unsafe_allow_html=True)
 
 # تنظيف واجهة Streamlit (إخفاء شريط الأدوات/القوائم) + تهيئة PWA والوضع بدون اتصال
 ui.clean_ui()
@@ -37,26 +35,25 @@ if auth.is_admin():
 # (بعد التحقق من الدخول حتى لا تُكتب بيانات بدون مستخدم مُصرَّح).
 projects = db.list_projects()
 
-with st.sidebar:
-    ui.sidebar_brand()
-    p = auth.profile()
-    st.markdown(f'<div class="side-user">{p.get("full_name") or p["username"]}'
-                f' · {ROLE_LABELS.get(p["role"], "")}</div>', unsafe_allow_html=True)
+# ---------------------------------------------------------------------------
+# الشريط العلوي: الهوية + أدوات المستخدم (المشروع / الخروج) — بديل القائمة الجانبية
+# ---------------------------------------------------------------------------
+ui.top_bar(projects)
 
-    project = None
-    if projects:
-        ids = [x["id"] for x in projects]
-        default = ids.index(st.session_state["project_id"]) if st.session_state.get("project_id") in ids else 0
-        project = st.selectbox("المشروع الحالي", projects, index=default,
-                               format_func=lambda x: f"{x['code'] + ' – ' if x.get('code') else ''}{x['name']}")
-        st.session_state["project_id"] = project["id"]
-    st.divider()
-    page = st.radio("القائمة", list(NAV), format_func=lambda k: NAV[k][0], label_visibility="collapsed")
-    st.divider()
-    st.toggle("الوضع الداكن", key="dark_mode")
-    if st.button("تسجيل الخروج"):
-        auth.logout()
-        st.rerun()
+# ---------------------------------------------------------------------------
+# شريط التنقل الأفقي (Modern Tabs) — بديل القائمة الجانبية نهائياً
+# ---------------------------------------------------------------------------
+page = st.radio(
+    "التنقل الرئيسي",
+    list(NAV),
+    format_func=lambda k: NAV[k][0],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="nav_page",
+)
+ui.nav_bar_css()
+
+project = ui.current_project(projects)
 
 if page == "admin":
     from views import admin

@@ -2,7 +2,7 @@
 import streamlit as st
 
 from core import auth, pwa
-from core.config import APP_NAME_AR, APP_NAME_EN, APP_SHORT
+from core.config import APP_NAME_AR, APP_NAME_EN, APP_SHORT, ROLE_LABELS
 
 
 def logo_svg(fg: str = "#FFFFFF", accent: str = "#D4AF5A", width: int = 220) -> str:
@@ -38,6 +38,89 @@ def sidebar_brand() -> None:
     st.markdown(f'<div class="sidebar-brand">{logo_svg(width=190)}</div>', unsafe_allow_html=True)
 
 
+def top_bar(projects: list) -> None:
+    """الشريط العلوي: الهوية + أدوات المستخدم (المشروع الحالي وتسجيل الخروج).
+
+    بديل القائمة الجانبية: تُنقل هنا الأدوات الوظيفية الأربع (الهوية، البروفايل،
+    المشروع الحالي، تسجيل الخروج) حتى لا تُفقد عند إلغاء ``st.sidebar``.
+    """
+    p = auth.profile()
+    c_brand, c_user, c_proj, c_out = st.columns([1.15, 1.5, 1.5, 0.55], vertical_alignment="center")
+
+    with c_brand:
+        st.markdown(f'<div class="topbar-brand">{logo_svg(width=150)}</div>', unsafe_allow_html=True)
+    with c_user:
+        st.markdown(
+            f'<div class="topbar-user">{p.get("full_name") or p["username"]}'
+            f' · {ROLE_LABELS.get(p["role"], "")}</div>',
+            unsafe_allow_html=True,
+        )
+    with c_proj:
+        project = None
+        if projects:
+            ids = [x["id"] for x in projects]
+            cur = st.session_state.get("project_id")
+            default = ids.index(cur) if cur in ids else 0
+            project = st.selectbox(
+                "المشروع الحالي", projects, index=default, label_visibility="collapsed",
+                format_func=lambda x: f"{x['code'] + ' – ' if x.get('code') else ''}{x['name']}",
+                key="topbar_project",
+            )
+            st.session_state["project_id"] = project["id"]
+    with c_out:
+        if st.button("خروج", use_container_width=True):
+            auth.logout()
+            st.rerun()
+
+
+def current_project(projects: list):
+    """المشروع النشط كما اختاره المستخدم في الشريط العلوي (أو الأول افتراضياً)."""
+    if not projects:
+        return None
+    ids = [x["id"] for x in projects]
+    cur = st.session_state.get("project_id")
+    return projects[ids.index(cur)] if cur in ids else projects[0]
+
+
+def nav_bar_css() -> None:
+    """تنسيق شريط التنقل الأفقي العلوي ليكون تبويبات عصرية واضحة على الموبايل والكمبيوتر."""
+    st.markdown(
+        """
+<style>
+/* شريط التنقل الأفقي: حاوية تبويبات بألوان اللوحة الداكنة */
+[data-testid="stMainBlockContainer"] [role="radiogroup"]{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:8px;display:flex !important;flex-wrap:wrap;gap:8px;justify-content:center;
+  box-shadow:0 2px 10px var(--shadow);margin-bottom:1.1rem;}
+[data-testid="stMainBlockContainer"] [role="radiogroup"] label{
+  background:var(--bg);color:var(--muted);border:1px solid var(--border);
+  border-radius:10px;padding:8px 16px;font-weight:600;cursor:pointer;margin:0;
+  transition:background .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease;}
+[data-testid="stMainBlockContainer"] [role="radiogroup"] label:hover{
+  background:var(--hover);color:var(--text);border-color:var(--accent-line);}
+[data-testid="stMainBlockContainer"] [role="radiogroup"] label *{color:inherit !important;}
+/* التبويب النشط بلون e& الأحمر */
+[data-testid="stMainBlockContainer"] [role="radiogroup"] label:has(input:checked){
+  background:var(--accent) !important;color:#FFFFFF !important;border-color:var(--accent) !important;
+  box-shadow:0 4px 14px var(--accent-glow);}
+[data-testid="stMainBlockContainer"] [role="radiogroup"] input{display:none;}
+
+/* تنسيق الشريط العلوي للهوية والمستخدم */
+.topbar-brand svg{max-width:150px;}
+.topbar-user{color:var(--muted);font-weight:600;font-size:.9rem;text-align:center;}
+
+@media (max-width:768px){
+  [data-testid="stMainBlockContainer"] [role="radiogroup"]{padding:6px;gap:6px;}
+  [data-testid="stMainBlockContainer"] [role="radiogroup"] label{
+    padding:7px 11px;font-size:.85rem;flex:1 1 auto;text-align:center;}
+  .topbar-user{font-size:.8rem;}
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def login_screen() -> None:
     pwa.inject()  # تثبيت التطبيق متاح حتى قبل الدخول (وضع مستقل بهوية CGES) — البند (أ)
     _, col, _ = st.columns([1, 1.4, 1])
@@ -69,7 +152,9 @@ header {visibility: hidden !important;}
 
 /* إزالة أي خطوط فاصلة مزعجة أو حدود ظاهرة في منتصف الشاشة على الموبايل */
 [data-testid="stSidebarNav"] {background-color: transparent;}
-[data-testid="collapsedControl"] {display: block;}
+/* القائمة الجانبية ملغاة: التنقل والأدوات في الشريط العلوي الأفقي */
+[data-testid="stSidebar"], [data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"] {display: none !important;}
 
 /* تحسين الفراغات وتجربة المستخدم (UX) على الشاشات الصغيرة والموبايل */
 @media (max-width: 768px) {
