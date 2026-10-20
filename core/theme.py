@@ -202,11 +202,13 @@ table.cges-table tbody tr:hover td{background:var(--hover);}
 
 /* ---------- الموبايل (البند 2.4: عرض نظيف على شاشة الهاتف) ---------- */
 @media (max-width:768px){
-  .block-container{padding:3.2rem .7rem 2rem;}
+  .block-container{padding:3.2rem .5rem 2rem;}
+  /* منع أي تداخل/قطع للنصوص في منتصف الشاشة */
+  .block-container,[data-testid="stAppViewContainer"]{overflow-x:hidden;}
   .page-head h1{font-size:1.3rem;}
   .page-head p{font-size:.85rem;}
   .dim-line{max-width:100%;}
-  [data-testid="stMetric"]{padding:.7rem .85rem;}
+  [data-testid="stMetric"]{padding:.7rem .85rem;margin-bottom:10px;}
   [data-testid="stMetricValue"]{font-size:1.5rem;}
   [data-testid="stMetricLabel"]{font-size:.8rem;}
   .stButton>button,.stFormSubmitButton>button,.stDownloadButton>button,
