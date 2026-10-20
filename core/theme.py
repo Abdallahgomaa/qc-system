@@ -101,16 +101,18 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 .stTabs [data-baseweb="tab-highlight"]{background:var(--accent);height:3px;}
 .stTabs [data-baseweb="tab-border"]{background:transparent;}
 .stButton>button,.stDownloadButton>button,.stFormSubmitButton>button,[data-testid="stLinkButton"] a{
+  background:var(--bg);color:var(--text);
   border-radius:10px;border:1px solid var(--border);font-weight:600;min-height:2.6rem;
   transition:transform .18s ease,box-shadow .18s ease,background .18s ease;}
 .stButton>button:hover,.stDownloadButton>button:hover,[data-testid="stLinkButton"] a:hover{
-  background:var(--hover);box-shadow:0 4px 14px var(--shadow);transform:translateY(-1px);
+  background:var(--hover);color:var(--text);
+  box-shadow:0 4px 14px var(--shadow);transform:translateY(-1px);
   border-color:var(--accent-line);}
 .stFormSubmitButton>button[kind="primary"],.stButton>button[kind="primary"]{
-  background:var(--navy);color:#fff;border-color:var(--navy);
-  box-shadow:0 4px 14px rgba(15,37,64,.22);}
+  background:var(--accent);color:#FFFFFF;border-color:var(--accent);
+  font-weight:700;box-shadow:0 4px 14px var(--accent-glow);}
 .stFormSubmitButton>button[kind="primary"]:hover,.stButton>button[kind="primary"]:hover{
-  background:var(--accent);border-color:var(--accent);color:#fff;
+  background:var(--accent-soft);border-color:var(--accent-soft);color:#FFFFFF;
   box-shadow:0 6px 20px var(--accent-line);transform:translateY(-1px);}
 [data-testid="stForm"]{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;
   box-shadow:0 2px 10px var(--shadow);}
