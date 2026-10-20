@@ -43,7 +43,9 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 [data-testid="stSidebar"]{background:var(--surface);border-left:1px solid var(--border);direction:rtl;}
 [data-testid="stSidebar"] *{color:var(--text);}
 [data-testid="stSidebar"] hr{border-color:var(--border);}
-[data-testid="stSidebar"] [data-baseweb="select"] > div{
+[data-testid="stSidebar"] [data-baseweb="select"] > div,
+[data-testid="stSidebar"] .react-aria-ComboBox > div[role="group"],
+[data-testid="stSidebar"] [role="group"]:has(> input[role="combobox"]){
   background:var(--bg);border-color:var(--border);}
 [data-testid="stSidebar"] .stRadio label{padding:.55rem .7rem;border-radius:10px;width:100%;
   transition:background .18s ease,box-shadow .18s ease;}
@@ -113,6 +115,58 @@ h1,h2,h3,h4,p,label,li,span,.stMarkdown{color:var(--text);}
 [data-testid="stForm"]{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;
   box-shadow:0 2px 10px var(--shadow);}
 :focus-visible{outline:2px solid var(--accent) !important;outline-offset:2px;}
+
+/* ---------- حقول الإدخال والقوائم المنسدلة (وضوح كامل للألوان) ---------- */
+/* خلفية الحقول تتبع اللوحة (var(--surface)) لا لوناً ثابتاً، فتبقى متناسقة
+   مع البطاقات والقائمة الجانبية في الوضعين الفاتح والداكن. */
+input, textarea,
+.stTextInput input, .stNumberInput input, .stTextArea textarea, .stDateInput input,
+.stTextInput [data-baseweb="base-input"], .stNumberInput [data-baseweb="base-input"],
+.stDateInput [data-baseweb="base-input"], .stTextArea textarea{
+  background-color:var(--surface) !important;color:var(--text) !important;
+  border-color:var(--border) !important;border-radius:10px !important;}
+.stTextInput input, .stNumberInput input, .stTextArea textarea, .stDateInput input{
+  border:1px solid var(--border) !important;}
+/* القوائم المنسدلة (اختيار واحد/متعدد) + النص المختار بداخلها */
+div[data-baseweb="select"] > div, div[data-baseweb="input"] > div{
+  background-color:var(--surface) !important;color:var(--text) !important;
+  border-color:var(--border) !important;border-radius:10px !important;}
+div[data-baseweb="select"] span, div[data-baseweb="select"] input,
+div[data-baseweb="select"] svg{color:var(--text) !important;fill:var(--text) !important;}
+/* Streamlit الحديث يرسم حقول الاختيار بـreact-aria (ComboBox) لا baseweb،
+   وحاويتها div[role="group"] بيضاء افتراضياً فتظهر كمربع أبيض في الوضع
+   الداكن — نربطها باللوحة هنا. */
+.react-aria-ComboBox > div[role="group"], [role="group"]:has(> input[role="combobox"]){
+  background-color:var(--surface) !important;color:var(--text) !important;
+  border:1px solid var(--border) !important;border-radius:10px !important;}
+.react-aria-ComboBox > div[role="group"]:focus-within,
+[role="group"]:has(> input[role="combobox"]):focus-within{
+  border-color:var(--accent) !important;box-shadow:0 0 0 2px var(--accent-tint) !important;}
+.react-aria-ComboBox input[role="combobox"], input[role="combobox"]{
+  background-color:transparent !important;color:var(--text) !important;}
+.react-aria-ComboBox input[role="combobox"]::placeholder{color:var(--muted) !important;opacity:.85;}
+/* قائمة الخيارات المنسدلة (react-aria/MUI Popup) */
+[role="listbox"], [role="listbox"] [role="option"], ul[data-baseweb="menu"]{
+  background-color:var(--surface) !important;color:var(--text) !important;}
+[role="option"]:hover, [role="option"][aria-selected="true"]{
+  background-color:var(--accent-tint) !important;color:var(--text) !important;}
+/* قائمة الخيارات المنسدلة (Popup) — لأنها تُرسم خارج حاوية التطبيق */
+ul[data-baseweb="menu"], div[data-baseweb="popover"] ul{
+  background-color:var(--surface) !important;}
+ul[data-baseweb="menu"] li, div[data-baseweb="popover"] li{color:var(--text) !important;}
+ul[data-baseweb="menu"] li:hover, div[data-baseweb="popover"] li[aria-selected="true"]{
+  background-color:var(--accent-tint) !important;color:var(--text) !important;}
+/* النص المؤقت (Placeholder) أفتح قليلاً من النص العادي */
+input::placeholder, textarea::placeholder{color:var(--muted) !important;opacity:.85;}
+/* تأثير التركيز بلون هوية e& */
+input:focus, textarea:focus, div[data-baseweb="select"] > div:focus-within,
+div[data-baseweb="input"] > div:focus-within{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 2px var(--accent-tint) !important;}
+/* ملصقات الحقول: واضحة وسميكة */
+label, .stTextInput label, .stSelectbox label, .stNumberInput label,
+.stDateInput label, .stTextArea label, .stMultiSelect label{
+  color:var(--text) !important;font-weight:600 !important;font-size:.95rem !important;}
 
 /* ---------- التنبيهات الذكية ---------- */
 .alert{background:var(--surface);border:1px solid var(--border);border-right:4px solid var(--muted);
